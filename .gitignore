@@ -1,1 +1,7 @@
 /build
+/out
+/dist
+dependencies/lib/FreeImage/x64/static
+
+.idea
+.vs

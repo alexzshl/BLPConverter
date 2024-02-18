@@ -21,10 +21,15 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${BLPCONVERTER_BINARY_DIR}/bin")
 
 add_subdirectory(dependencies)
 
+# 设置 FreeImage 的路径
+set(FreeImage_DIR "${BLPCONVERTER_SOURCE_DIR}/dependencies/lib/FreeImage/x64/static")
+
 include_directories("${BLPCONVERTER_SOURCE_DIR}/dependencies/include/"
-                    "${BLPCONVERTER_SOURCE_DIR}/dependencies/FreeImage/"
+                    "${FreeImage_DIR}/"
                     "${BLPCONVERTER_SOURCE_DIR}/dependencies/squish/"
 )
+
+link_directories("${FreeImage_DIR}")
 
 
 set(EXECUTABLE_SRCS main.cpp)
@@ -51,6 +56,16 @@ if (WITH_LIBRARY)
     install(FILES blp.h DESTINATION include)
 endif()
 
+if(MSVC)
+  set(variables CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
+                CMAKE_CXX_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_MINSIZEREL)
+  foreach(variable ${variables})
+    if(${variable} MATCHES "/MD")
+      string(REGEX REPLACE "/MD" "/MT" ${variable} "${${variable}}")
+    endif()
+  endforeach()
+endif()
+
 
 ##########################################################################################
 # BLPConverter executable
@@ -66,7 +81,7 @@ if (WITH_LIBRARY)
     endif()
 else()
     add_executable(BLPConverter ${EXECUTABLE_SRCS} ${LIBRARY_SRCS} ${LIBRARY_HEADERS})
-    target_link_libraries(BLPConverter freeimage squish)
+    target_link_libraries(BLPConverter FreeImage squish)
 endif()
 
 set_target_properties(BLPConverter PROPERTIES COMPILE_DEFINITIONS "FREEIMAGE_LIB")
