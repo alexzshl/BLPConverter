@@ -2,7 +2,7 @@
 #include "blp_internal.h"
 #include <squish.h>
 #include <FreeImage.h>
-#include <iostream>
+//#include <iostream>
 #include <string.h>
 #include <memory.h>
 
@@ -101,9 +101,9 @@ tBLPFormat blp_format(tBLPInfos blpInfos)
 {
     tInternalBLPInfos* pBLPInfos = static_cast<tInternalBLPInfos*>(blpInfos);
 
-    int flag = 123;
-    std::cout << flag << std::endl;
-    std::cout << pBLPInfos->version << std::endl;
+    //int flag = 123;
+    //std::cout << flag << std::endl;
+    //std::cout << pBLPInfos->version << std::endl;
 
     if (pBLPInfos->version == 2)
     {
@@ -120,8 +120,8 @@ tBLPFormat blp_format(tBLPInfos blpInfos)
     }
     else
     {
-        std::cout << pBLPInfos->blp1.header.type << std::endl;
-        std::cout << pBLPInfos->blp1.header.flags << std::endl;
+        //std::cout << pBLPInfos->blp1.header.type << std::endl;
+        //std::cout << pBLPInfos->blp1.header.flags << std::endl;
         if (pBLPInfos->blp1.header.type == 0)
            return BLP_FORMAT_JPEG;
 
@@ -234,7 +234,8 @@ tBGRAPixel* blp_convert(FILE* pFile, tBLPInfos blpInfos, unsigned int mipLevel)
     switch (blp_format(pBLPInfos))
     {
         case BLP_FORMAT_JPEG:
-             std::cout << "BLP_FORMAT_JPEG" << std::endl;
+            //std::cout << "BLP_FORMAT_JPEG" << std::endl;
+            
             // if (pBLPInfos->version == 2)
             //     pDst = blp2_convert_paletted_no_alpha(pSrc, &pBLPInfos->blp2, width, height);
             // else
@@ -242,7 +243,7 @@ tBGRAPixel* blp_convert(FILE* pFile, tBLPInfos blpInfos, unsigned int mipLevel)
             break;
 
         case BLP_FORMAT_PALETTED_NO_ALPHA:
-            std::cout << "BLP_FORMAT_PALETTED_NO_ALPHA" << std::endl;
+            //std::cout << "BLP_FORMAT_PALETTED_NO_ALPHA" << std::endl;
             if (pBLPInfos->version == 2)
                 pDst = blp2_convert_paletted_no_alpha(pSrc, &pBLPInfos->blp2, width, height);
             else
@@ -250,30 +251,30 @@ tBGRAPixel* blp_convert(FILE* pFile, tBLPInfos blpInfos, unsigned int mipLevel)
             break;
 
         case BLP_FORMAT_PALETTED_ALPHA_1:  
-            std::cout << "BLP_FORMAT_PALETTED_ALPHA_1" << std::endl;
+            //std::cout << "BLP_FORMAT_PALETTED_ALPHA_1" << std::endl;
             pDst = blp2_convert_paletted_alpha1(pSrc, &pBLPInfos->blp2, width, height); break;
 
         case BLP_FORMAT_PALETTED_ALPHA_4:  
-            std::cout << "BLP_FORMAT_PALETTED_ALPHA_4" << std::endl;
+            //std::cout << "BLP_FORMAT_PALETTED_ALPHA_4" << std::endl;
             pDst = blp2_convert_paletted_alpha4(pSrc, &pBLPInfos->blp2, width, height); break;
 
         case BLP_FORMAT_PALETTED_ALPHA_8:
-            std::cout << "BLP_FORMAT_PALETTED_ALPHA_8" << std::endl;
+            //std::cout << "BLP_FORMAT_PALETTED_ALPHA_8" << std::endl;
             if (pBLPInfos->version == 2)
             {
-                std::cout << "blp2_convert_paletted_alpha8" << std::endl;
+                //std::cout << "blp2_convert_paletted_alpha8" << std::endl;
                 pDst = blp2_convert_paletted_alpha8(pSrc, &pBLPInfos->blp2, width, height);
             }
             else
             {
                 if (pBLPInfos->blp1.header.alphaEncoding == 5)
                 {
-                    std::cout << "blp1_convert_paletted_alpha" << std::endl;
+                    //std::cout << "blp1_convert_paletted_alpha" << std::endl;
                     pDst = blp1_convert_paletted_alpha(pSrc, &pBLPInfos->blp1.infos, width, height);
                 }
                 else
                 {
-                    std::cout << "blp1_convert_paletted_separated_alpha" << std::endl;
+                    //std::cout << "blp1_convert_paletted_separated_alpha" << std::endl;
                     pDst = blp1_convert_paletted_separated_alpha(pSrc, &pBLPInfos->blp1.infos, width, height);
                 }
             }
@@ -345,7 +346,7 @@ tBGRAPixel* blp1_convert_jpeg(uint8_t* pSrc, tBLP1Infos* pInfos, uint32_t size)
             pDst->g = pSrc2[FI_RGBA_GREEN];
             pDst->b = pSrc2[FI_RGBA_RED];
             //pDst->a = 0xFF;
-            pDst->a = pSrc2[FI_RGBA_ALPHA]; // 设置alpha值: 后面有时间再增加命令行参数, 允许用户放弃alpha通道,即上面的代码
+            pDst->a = pSrc2[FI_RGBA_ALPHA];
 
             ++pDst;
             pSrc2 += bytespp;
