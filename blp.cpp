@@ -2,9 +2,11 @@
 #include "blp_internal.h"
 #include <squish.h>
 #include <FreeImage.h>
-//#include <iostream>
+#include <iostream>
 #include <string.h>
 #include <memory.h>
+
+bool DEBUG = false;
 
 // Forward declaration of "internal" functions
 tBGRAPixel* blp1_convert_jpeg(uint8_t* pSrc, tBLP1Infos* pInfos, uint32_t size);
@@ -228,6 +230,10 @@ tBGRAPixel* blp_convert(FILE* pFile, tBLPInfos blpInfos, unsigned int mipLevel)
     pSrc = new uint8_t[size];
 
     // Read the data from the file
+    if (DEBUG) std::cout << "mipLevel: " << mipLevel << std::endl;
+    if (DEBUG) std::cout << "offset: " << offset << std::endl;
+    if (DEBUG) std::cout << "size: " << size << std::endl;
+    if (DEBUG) std::cout << "sizeof(uint8_t): " << sizeof(uint8_t) << std::endl;
     fseek(pFile, offset, SEEK_SET);
     fread((void*) pSrc, sizeof(uint8_t), size, pFile);
 
@@ -315,14 +321,25 @@ std::string blp_asString(tBLPFormat format)
     }
 }
 
+void printInfo(const tBLP1Infos* infos) {
+    std::cout << "nbMipLevels: " << infos->nbMipLevels << std::endl;
+    std::cout << "jpeg.headerSize: " << infos->jpeg.headerSize << std::endl;
+    // 打印其他成员的值...
+}
 
 tBGRAPixel* blp1_convert_jpeg(uint8_t* pSrc, tBLP1Infos* pInfos, uint32_t size)
 {
+    // pSrc 指向文件第 1180 / 0x49C 字节位置
+    //std::cout << "size: " << size << std::endl;
+
     uint8_t* pSrcBuffer = new uint8_t[pInfos->jpeg.headerSize + size];
 
     memcpy(pSrcBuffer, pInfos->jpeg.header, pInfos->jpeg.headerSize);
     memcpy(pSrcBuffer + pInfos->jpeg.headerSize, pSrc, size);
 
+    if (DEBUG) printInfo(pInfos);
+    if (DEBUG) std::cout << "size: " << size << std::endl;
+    if (DEBUG) std::cout << "data offset: " << pInfos->jpeg.headerSize + size << std::endl;
     FIMEMORY* pMemory = FreeImage_OpenMemory(pSrcBuffer, pInfos->jpeg.headerSize + size);
 
     FIBITMAP* pBitmap = FreeImage_LoadFromMemory(FIF_JPEG, pMemory);
@@ -331,27 +348,80 @@ tBGRAPixel* blp1_convert_jpeg(uint8_t* pSrc, tBLP1Infos* pInfos, uint32_t size)
     unsigned int height = FreeImage_GetHeight(pBitmap);
     unsigned int bytespp = FreeImage_GetLine(pBitmap) / FreeImage_GetWidth(pBitmap);
 
+    if (DEBUG) std::cout << "width: " << width << std::endl;
+    if (DEBUG) std::cout << "height: " << height << std::endl;
+    if (DEBUG) std::cout << "bytespp: " << bytespp << std::endl;
 
     tBGRAPixel* pBuffer = new tBGRAPixel[width * height];
     tBGRAPixel* pDst = pBuffer;
 
+    uint8_t* pAlpha = pSrc + width * height;
+
+    if (DEBUG) std::cout << "pSrc value: " << std::hex << std::uppercase << static_cast<int>(*pSrc) << std::endl;
+    if (DEBUG) std::cout << "pSrc value: " << std::hex << std::uppercase << static_cast<int>(*(pSrc + 1)) << std::endl;
+    if (DEBUG) std::cout << "pSrc value: " << std::hex << std::uppercase << static_cast<int>(*(pSrc + 2)) << std::endl;
+
     for (unsigned int y = 0; y < height; ++y)
     {
+        if (DEBUG) std::cout << "y: " << y << std::endl;
         BYTE* pSrc2 = FreeImage_GetScanLine(pBitmap, height - y - 1);
+
+        //std::cout << "pSrc2[0]: " << std::hex << std::uppercase << static_cast<int>(pSrc2[0]) << std::endl;
+        //std::cout << "pSrc2[1]: " << std::hex << std::uppercase << static_cast<int>(pSrc2[1]) << std::endl;
+        //std::cout << "pSrc2[2]: " << std::hex << std::uppercase << static_cast<int>(pSrc2[2]) << std::endl;
+        //std::cout << "pSrc2[3]: " << std::hex << std::uppercase << static_cast<int>(pSrc2[3]) << std::endl;
+        //std::cout << "pSrc2[4]: " << std::hex << std::uppercase << static_cast<int>(pSrc2[4]) << std::endl;
+        //std::cout << "pSrc2[5]: " << std::hex << std::uppercase << static_cast<int>(pSrc2[5]) << std::endl;
 
         for (unsigned int x = 0; x < width; ++x)
         {
+            //std::cout << "x: " << x << std::endl;
+            //std::cout << "pSrc2 data: " << std::hex << std::uppercase << static_cast<int>(*pSrc2) << std::endl;
+
             // R and B are inverted in the JPEG file
             pDst->r = pSrc2[FI_RGBA_BLUE];
+            //std::cout << "pSrc2[FI_RGBA_BLUE]: " << std::hex << std::uppercase << static_cast<int>(pSrc2[FI_RGBA_BLUE]) << std::endl;
             pDst->g = pSrc2[FI_RGBA_GREEN];
+            //std::cout << "pSrc2[FI_RGBA_GREEN]: " << std::hex << std::uppercase << static_cast<int>(pSrc2[FI_RGBA_GREEN]) << std::endl;
             pDst->b = pSrc2[FI_RGBA_RED];
-            //pDst->a = 0xFF;
-            pDst->a = pSrc2[FI_RGBA_ALPHA];
+            //std::cout << "pSrc2[FI_RGBA_RED]: " << std::hex << std::uppercase << static_cast<int>(pSrc2[FI_RGBA_RED]) << std::endl;
+            //std::cout << "pSrc2[FI_RGBA_ALPHA]: " << std::hex << std::uppercase << static_cast<int>(pSrc2[FI_RGBA_ALPHA]) << std::endl;
+            pDst->a = 0xFF;
+            //pDst->a = *pAlpha;
+            //std::cout << "pAlpha value: " << std::hex << std::uppercase << static_cast<int>(*pAlpha) << std::endl;
+            ++pAlpha;
+            
+            //pDst->a = pSrc2[FI_RGBA_ALPHA];
 
+            //std::cout << pSrc2[FI_RGBA_ALPHA] << std::endl;
+            // // 打印 pSrc2[FI_RGBA_ALPHA] 的整数值
+            //int alphaValue = static_cast<int>(pSrc2[FI_RGBA_ALPHA]);
+            ////std::cout << "Alpha value at (" << x << ", " << y << "): " << alphaValue << std::endl;
+            //if (alphaValue == 0) {
+            //    pDst->a = 0x00;
+            //}
+            //else {
+            //    pDst->a = 0xFF;
+            //}
+            //pDst->a = (bytespp >= 4 && pSrc2[FI_RGBA_ALPHA] < 255) ? pSrc2[FI_RGBA_ALPHA] : 255;
+
+            
             ++pDst;
             pSrc2 += bytespp;
+            
+            //if (x >= 10) {
+            //    break;
+            //}
+            
         }
+
+        //break;
     }
+
+    if (DEBUG) std::cout << "pAlpha value: " << std::hex << std::uppercase << static_cast<int>(*pAlpha) << std::endl;
+    ++pAlpha;
+    if (DEBUG) std::cout << "pAlpha value: " << std::hex << std::uppercase << static_cast<int>(*pAlpha) << std::endl;
+    
 
     FreeImage_Unload(pBitmap);
 
